@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>曉鹿鳴樓 Google 評論輿情大數據分析儀表板</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @keyframes pulseGlow {
+      0%, 100% { opacity: 0.8; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.02); }
+    }
+    .badge-positive { background-color: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .badge-negative { background-color: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
+    .badge-warning { background-color: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .badge-info { background-color: rgba(59, 130, 246, 0.15); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.3); }
+    .radar-polygon { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+    .card-transition { transition: all 0.25s ease-out; }
+    .card-transition:hover { transform: translateY(-3px); }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 antialiased font-sans min-h-screen selection:bg-rose-500 selection:text-white">
+
+  <!-- Header -->
+  <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-rose-600 flex items-center justify-center shadow-lg shadow-rose-900/40">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-xl font-bold tracking-tight text-white">曉鹿鳴樓 永續台灣功夫菜</h1>
+            <span class="text-xs px-2.5 py-0.5 rounded-full font-medium bg-amber-500/20 text-amber-400 border border-amber-500/30">Google 評論輿情透視</span>
+          </div>
+          <p class="text-xs text-slate-400 mt-0.5">公館台大商圈｜樣本母體：精選 100 筆真實評論深度語意剖析</p>
+        </div>
+      </div>
+      
+      <!-- Quick Navigation Tabs -->
+      <nav class="flex items-center space-x-1.5 p-1 bg-slate-800/80 rounded-lg text-xs font-medium border border-slate-700/60">
+        <button onclick="switchTab('overview')" id="tab-overview" class="px-3 py-1.5 rounded-md transition text-white bg-slate-700 shadow-sm">輿情總覽</button>
+        <button onclick="switchTab('positives')" id="tab-positives" class="px-3 py-1.5 rounded-md transition text-slate-400 hover:text-white">3大正面亮點</button>
+        <button onclick="switchTab('negatives')" id="tab-negatives" class="px-3 py-1.5 rounded-md transition text-slate-400 hover:text-white">3大痛點改進</button>
+        <button onclick="switchTab('matrix')" id="tab-matrix" class="px-3 py-1.5 rounded-md transition text-slate-400 hover:text-white">改善行動方針</button>
+        <button onclick="switchTab('reviews')" id="tab-reviews" class="px-3 py-1.5 rounded-md transition text-slate-400 hover:text-white">評論檢索器</button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Content Container -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+    <!-- KPI Metrics Row -->
+    <section class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-5 shadow-sm relative overflow-hidden">
+        <div class="absolute -right-3 -bottom-3 w-16 h-16 bg-emerald-500/10 rounded-full blur-xl"></div>
+        <div class="text-xs font-medium text-slate-400 uppercase tracking-wider">正面情感佔比</div>
+        <div class="mt-2 flex items-baseline gap-2">
+          <span class="text-3xl font-extrabold text-emerald-400">68%</span>
+          <span class="text-xs text-emerald-500 font-semibold">味道與招牌撐場</span>
+        </div>
+        <p class="mt-1 text-xs text-slate-400">68則高度認可菜品水準與東坡肉</p>
+      </div>
+
+      <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-5 shadow-sm relative overflow-hidden">
+        <div class="absolute -right-3 -bottom-3 w-16 h-16 bg-red-500/10 rounded-full blur-xl"></div>
+        <div class="text-xs font-medium text-slate-400 uppercase tracking-wider">需改進/負評佔比</div>
+        <div class="mt-2 flex items-baseline gap-2">
+          <span class="text-3xl font-extrabold text-rose-400">18%</span>
+          <span class="text-xs text-rose-500 font-semibold">服務與節奏重災區</span>
+        </div>
+        <p class="mt-1 text-xs text-slate-400">18則強烈批評趕客、態度與出菜</p>
+      </div>
+
+      <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-5 shadow-sm relative overflow-hidden">
+        <div class="absolute -right-3 -bottom-3 w-16 h-16 bg-amber-500/10 rounded-full blur-xl"></div>
+        <div class="text-xs font-medium text-slate-400 uppercase tracking-wider">中立/持平觀望</div>
+        <div class="mt-2 flex items-baseline gap-2">
+          <span class="text-3xl font-extrabold text-amber-400">14%</span>
+          <span class="text-xs text-amber-500 font-semibold">偏甜/價位偏高</span>
+        </div>
+        <p class="mt-1 text-xs text-slate-400">口味偏重、性價比感受因人而異</p>
+      </div>
+
+      <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-5 shadow-sm relative overflow-hidden">
+        <div class="absolute -right-3 -bottom-3 w-16 h-16 bg-cyan-500/10 rounded-full blur-xl"></div>
+        <div class="text-xs font-medium text-slate-400 uppercase tracking-wider">招牌東坡肉好評率</div>
+        <div class="mt-2 flex items-baseline gap-2">
+          <span class="text-3xl font-extrabold text-cyan-400">92%</span>
+          <span class="text-xs text-cyan-500 font-semibold">鎮店靈魂料理</span>
+        </div>
+        <p class="mt-1 text-xs text-slate-400">提及36次，入口即化配刈包口碑封神</p>
+      </div>
+    </section>
+
+    <!-- SECTION: OVERVIEW -->
+    <section id="view-overview" class="space-y-6">
+      
+      <!-- Expert Summary Banner -->
+      <div class="p-6 rounded-2xl bg-gradient-to-r from-slate-900 via-indigo-950/40 to-slate-900 border border-indigo-900/40 relative">
+        <div class="flex items-start gap-4">
+          <div class="p-3 bg-indigo-600/20 text-indigo-400 rounded-xl border border-indigo-500/30 shrink-0">
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          </div>
+          <div>
+            <h2 class="text-lg font-bold text-white flex items-center gap-2">
+              輿情專家觀點診斷：極端的「料理封神」vs「服務趕客」斷層現象
+            </h2>
+            <p class="mt-2 text-sm text-slate-300 leading-relaxed">
+              綜合爬梳近百則顧客評論，曉鹿鳴樓展現了極為罕見的<strong class="text-emerald-400">「菜品硬實力極強、外場軟服務嚴重扯後腿」</strong>之雙峰反差。
+              以<span class="text-amber-300 font-medium">「銷魂東坡肉」</span>、<span class="text-amber-300 font-medium">「峭壁石斛燉雞湯」</span>與<span class="text-amber-300 font-medium">「翡翠菜飯」</span>構成的鐵三角陣容，讓老饕與家庭長輩忠誠度極高；
+              然而，外場<span class="text-rose-400 font-medium">「機械式趕客、未動筷就催打包收盤、90分鐘急躁翻桌」</span>以及<span class="text-rose-400 font-medium">「出菜順序顛倒（大菜吃完才上菜飯）」</span>，正在嚴重侵蝕中高階宴客顧客的回訪意願與尊嚴感。
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        <!-- Radar Chart: 5-Dimensional Performance -->
+        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-md">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h3 class="text-base font-semibold text-white">五大營運維度體質雷達圖</h3>
+              <p class="text-xs text-slate-400">滿分 100 分，根據語意情感強度加權換算</p>
+            </div>
+            <span class="text-xs font-mono px-2 py-1 bg-slate-800 text-slate-300 rounded border border-slate-700">Radar Analysis</span>
+          </div>
+
+          <div class="flex items-center justify-center py-2">
+            <svg class="w-full max-w-[340px] aspect-square" viewBox="0 0 320 320">
+              <!-- Radar Background Polygons -->
+              <polygon points="160,30 283,119 236,263 84,263 37,119" fill="none" stroke="#334155" stroke-width="1" stroke-dasharray="3 3"/>
+              <polygon points="160,65 249,130 215,233 105,233 71,130" fill="none" stroke="#334155" stroke-width="1" stroke-dasharray="3 3"/>
+              <polygon points="160,100 216,141 194,203 126,203 104,141" fill="none" stroke="#334155" stroke-width="1" stroke-dasharray="3 3"/>
+              <polygon points="160,135 182,152 173,173 147,173 138,152" fill="none" stroke="#334155" stroke-width="1"/>
+
+              <!-- Axis Lines -->
+              <line x1="160" y1="160" x2="160" y2="30" stroke="#475569" stroke-width="1"/>
+              <line x1="160" y1="160" x2="283" y2="119" stroke="#475569" stroke-width="1"/>
+              <line x1="160" y1="160" x2="236" y2="263" stroke="#475569" stroke-width="1"/>
+              <line x1="160" y1="160" x2="84" y2="263" stroke="#475569" stroke-width="1"/>
+              <line x1="160" y1="160" x2="37" y2="119" stroke="#475569" stroke-width="1"/>
+
+              <!-- Value Polygon:
+                  Center: (160, 160)
+                  1. 招牌料理美味度: 94% -> (160, 38)
+                  2. 聚餐地點與環境: 88% -> (268, 124)
+                  3. 價格合理性/CP值: 62% -> (207, 224)
+                  4. 服務禮貌與態度: 46% -> (125, 207)
+                  5. 出菜節奏與動線: 52% -> (96, 139)
+              -->
+              <polygon class="radar-polygon" points="160,38 268,124 207,224 125,207 96,139" 
+                       fill="rgba(244, 63, 94, 0.25)" stroke="#f43f5e" stroke-width="2.5"/>
+
+              <!-- Data Points -->
+              <circle cx="160" cy="38" r="4.5" fill="#f43f5e" stroke="#fff" stroke-width="1.5"/>
+              <circle cx="268" cy="124" r="4.5" fill="#f43f5e" stroke="#fff" stroke-width="1.5"/>
+              <circle cx="207" cy="224" r="4.5" fill="#f43f5e" stroke="#fff" stroke-width="1.5"/>
+              <circle cx="125" cy="207" r="4.5" fill="#f43f5e" stroke="#fff" stroke-width="1.5"/>
+              <circle cx="96" cy="139" r="4.5" fill="#f43f5e" stroke="#fff" stroke-width="1.5"/>
+
+              <!-- Labels -->
+              <text x="160" y="20" text-anchor="middle" fill="#38bdf8" font-size="11" font-weight="bold">招牌菜品美味 94</text>
+              <text x="290" y="125" text-anchor="start" fill="#38bdf8" font-size="11" font-weight="bold">交通硬體環境 88</text>
+              <text x="238" y="280" text-anchor="middle" fill="#fbbf24" font-size="11" font-weight="bold">性價比感知 62</text>
+              <text x="80" y="280" text-anchor="middle" fill="#f87171" font-size="11" font-weight="bold">外場服務禮儀 46 (危急)</text>
+              <text x="25" y="125" text-anchor="end" fill="#f87171" font-size="11" font-weight="bold">出菜順序節奏 52</text>
+            </svg>
+          </div>
+          
+          <div class="mt-4 pt-4 border-t border-slate-800 grid grid-cols-2 gap-2 text-xs">
+            <div class="flex items-center gap-1.5 text-emerald-400">
+              <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+              <strong>高勝率項目：</strong>料理風味、停車與包廂
+            </div>
+            <div class="flex items-center gap-1.5 text-rose-400">
+              <span class="w-2 h-2 rounded-full bg-rose-400"></span>
+              <strong>低滿意危機：</strong>收盤趕客、翻桌催促、上菜順序
+            </div>
+          </div>
+        </div>
+
+        <!-- Dish Popularity / Sentiment Breakdown -->
+        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-md flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <h3 class="text-base font-semibold text-white">關鍵菜色與高頻主題聲量榜</h3>
+                <p class="text-xs text-slate-400">提及次數及顧客情感滿意度分佈</p>
+              </div>
+              <span class="text-xs font-mono px-2 py-1 bg-slate-800 text-slate-300 rounded border border-slate-700">Frequency & Tone</span>
+            </div>
+
+            <!-- Custom Bars -->
+            <div class="space-y-4">
+              <div>
+                <div class="flex justify-between text-xs mb-1">
+                  <span class="font-medium text-slate-200">銷魂東坡肉 (配刈包)</span>
+                  <span class="text-emerald-400 font-bold">36 次提及 ｜ 92% 好評</span>
+                </div>
+                <div class="w-full bg-slate-800 rounded-full h-3 flex overflow-hidden">
+                  <div class="bg-emerald-500 h-full rounded-l-full" style="width: 92%"></div>
+                  <div class="bg-rose-500 h-full rounded-r-full" style="width: 8%"></div>
+                </div>
+              </div>
+
+              <div>
+                <div class="flex justify-between text-xs mb-1">
+                  <span class="font-medium text-slate-200">峭壁石斛燉雞湯 (預約/打卡)</span>
+                  <span class="text-emerald-400 font-bold">24 次提及 ｜ 95% 好評</span>
+                </div>
+                <div class="w-full bg-slate-800 rounded-full h-3 flex overflow-hidden">
+                  <div class="bg-emerald-500 h-full rounded-l-full" style="width: 95%"></div>
+                  <div class="bg-rose-500 h-full rounded-r-full" style="width: 5%"></div>
+                </div>
+              </div>
+
+              <div>
+                <div class="flex justify-between text-xs mb-1">
+                  <span class="font-medium text-slate-200">翡翠上海菜飯</span>
+                  <span class="text-emerald-400 font-bold">18 次提及 ｜ 83% 好評 (上菜慢)</span>
+                </div>
+                <div class="w-full bg-slate-800 rounded-full h-3 flex overflow-hidden">
+                  <div class="bg-emerald-500 h-full" style="width: 83%"></div>
+                  <div class="bg-amber-500 h-full" style="width: 10%"></div>
+                  <div class="bg-rose-500 h-full" style="width: 7%"></div>
+                </div>
+              </div>
+
+              <div>
+                <div class="flex justify-between text-xs mb-1">
+                  <span class="font-medium text-slate-200">收盤太急 / 趕客離場 (純負面關鍵詞)</span>
+                  <span class="text-rose-400 font-bold">17 次痛斥 ｜ 100% 負評</span>
+                </div>
+                <div class="w-full bg-slate-800 rounded-full h-3 flex overflow-hidden">
+                  <div class="bg-rose-500 h-full rounded-full" style="width: 100%"></div>
+                </div>
+              </div>
+
+              <div>
+                <div class="flex justify-between text-xs mb-1">
+                  <span class="font-medium text-slate-200">蔥燒鯽魚 / 臭豆腐 / 老皮嫩肉</span>
+                  <span class="text-emerald-400 font-bold">16 次提及 ｜ 88% 好評</span>
+                </div>
+                <div class="w-full bg-slate-800 rounded-full h-3 flex overflow-hidden">
+                  <div class="bg-emerald-500 h-full rounded-l-full" style="width: 88%"></div>
+                  <div class="bg-rose-500 h-full rounded-r-full" style="width: 12%"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-emerald-500"></span>正面好評</span>
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-amber-500"></span>中立/部分缺點</span>
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-rose-500"></span>強烈負評痛點</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Quick Highlights Grid Preview -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- 3 Positives Preview -->
+        <div class="bg-emerald-950/20 border border-emerald-900/40 rounded-2xl p-6">
+          <div class="flex items-center gap-2 mb-4">
+            <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-500/20 text-emerald-400">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            </span>
+            <h3 class="text-base font-bold text-emerald-400">三大最正面核心優勢 (點擊可切換詳情)</h3>
+          </div>
+          <ol class="space-y-3 text-xs leading-relaxed text-slate-300">
+            <li class="p-3 bg-slate-900/60 rounded-xl border border-emerald-900/30 cursor-pointer hover:border-emerald-500/50 transition" onclick="switchTab('positives')">
+              <strong class="text-white text-sm block mb-1">1. 鎮店招牌功夫菜口碑封神，記憶點極高</strong>
+              東坡肉「入口即化、配刈包絕配」被封台北最強；石斛雞湯溫潤回甘、翡翠菜飯粒粒分明，構成鐵三角。
+            </li>
+            <li class="p-3 bg-slate-900/60 rounded-xl border border-emerald-900/30 cursor-pointer hover:border-emerald-500/50 transition" onclick="switchTab('positives')">
+              <strong class="text-white text-sm block mb-1">2. 聚餐宴請絕佳場域，交通便利與大包廂機能</strong>
+              捷運公館站出站即達、周邊好停車，挑高明亮無壓迫感，大包廂更支援唱歌娛樂，台大校友享9折。
+            </li>
+            <li class="p-3 bg-slate-900/60 rounded-xl border border-emerald-900/30 cursor-pointer hover:border-emerald-500/50 transition" onclick="switchTab('positives')">
+              <strong class="text-white text-sm block mb-1">3. 江浙本幫功夫底蘊深厚，老少咸宜份量足</strong>
+              蔥燒鯽魚（連骨化軟）、清蒸臭豆腐、老皮嫩肉道道到位，大盤菜色兼顧長輩與外賓口味，飽足感充裕。
+            </li>
+          </ol>
+        </div>
+
+        <!-- 3 Negatives Preview -->
+        <div class="bg-rose-950/20 border border-rose-900/40 rounded-2xl p-6">
+          <div class="flex items-center gap-2 mb-4">
+            <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-rose-500/20 text-rose-400">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+            </span>
+            <h3 class="text-base font-bold text-rose-400">三大最需改進痛點 (點擊可切換詳情)</h3>
+          </div>
+          <ol class="space-y-3 text-xs leading-relaxed text-slate-300">
+            <li class="p-3 bg-slate-900/60 rounded-xl border border-rose-900/30 cursor-pointer hover:border-rose-500/50 transition" onclick="switchTab('negatives')">
+              <strong class="text-white text-sm block mb-1">1. 外場急躁「催趕收盤」，顧客用餐尊嚴被踐踏</strong>
+              菜才剛上、筷子沒放下就急問打包收走；90分鐘死板計時全桌清空，服務態度冰冷傲慢，收10%卻像被催離場。
+            </li>
+            <li class="p-3 bg-slate-900/60 rounded-xl border border-rose-900/30 cursor-pointer hover:border-rose-500/50 transition" onclick="switchTab('negatives')">
+              <strong class="text-white text-sm block mb-1">2. 出菜動線順序錯亂，溫控失當料理涼油</strong>
+              重口味大菜吃完才壓軸上菜飯；或者一次暴風出齊導致迅速冷卻變油；甚至有外熱內冷、擅換食材未告知瑕疵。
+            </li>
+            <li class="p-3 bg-slate-900/60 rounded-xl border border-rose-900/30 cursor-pointer hover:border-rose-500/50 transition" onclick="switchTab('negatives')">
+              <strong class="text-white text-sm block mb-1">3. 高價年節桌菜與包廂低消體驗崩盤</strong>
+              除夕年菜索價1.5萬至1.7萬，排場擁擠如難民營、菜色廉價無亮點；包廂強逼加菜、切蛋糕收300清潔費引發惡感。
+            </li>
+          </ol>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- SECTION: POSITIVES DETAIL -->
+    <section id="view-positives" class="hidden space-y-6">
+      <div class="border-b border-slate-800 pb-4">
+        <h2 class="text-xl font-bold text-white flex items-center gap-2">
+          <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
+          深度剖析：三大最正面核心亮點
+        </h2>
+        <p class="text-xs text-slate-400 mt-1">餐廳的立足之本，持續放大的黃金競爭護城河</p>
+      </div>
+
+      <!-- Positive 1 -->
+      <div class="bg-slate-900/90 border border-slate-800 hover:border-emerald-500/50 rounded-2xl p-6 card-transition shadow-lg">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-slate-800 pb-4">
+          <div class="flex items-center gap-3">
+            <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-400 font-black text-lg">01</span>
+            <div>
+              <h3 class="text-lg font-bold text-white">鎮店功夫菜陣容強大，記憶點爆棚（東坡肉、石斛燉雞湯、菜飯）</h3>
+              <p class="text-xs text-emerald-400 font-medium">口碑集中度最高（佔正面評論 75% 以上）</p>
+            </div>
+          </div>
+          <span class="badge-positive px-3 py-1 rounded-full text-xs font-semibold self-start md:self-auto">口碑護城河 No.1</span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-5">
+          <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+            <h4 class="text-xs font-bold text-amber-400 uppercase tracking-wide">銷魂東坡肉 (刈包)</h4>
+            <p class="text-xs text-slate-300 mt-2 leading-relaxed">
+              肥瘦比例適中，燉至軟爛鹹鮮、膠質滿溢，入口即化卻「肥而不膩」；搭配特製熱刈包或淋在白飯上被多次評為「全台北最強東坡肉」。
+            </p>
+            <div class="mt-3 text-[11px] text-slate-400 italic">「吃過這裡的東坡肉應該就回不去了，軟嫩不膩，美味至極！」</div>
+          </div>
+
+          <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+            <h4 class="text-xs font-bold text-amber-400 uppercase tracking-wide">峭壁石斛燉雞煲湯</h4>
+            <p class="text-xs text-slate-300 mt-2 leading-relaxed">
+              需事先預訂的指標大菜，湯頭清甜鮮美、毫無中藥苦澀與浮油油膩感；店家結合社群「打卡現折千元」活動，大幅引爆社群擴散與必點率。
+            </p>
+            <div class="mt-3 text-[11px] text-slate-400 italic">「石斛雞湯超級好喝，雞肉燉得很透，暖胃清甜，冬天來一碗太舒服。」</div>
+          </div>
+
+          <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+            <h4 class="text-xs font-bold text-amber-400 uppercase tracking-wide">曉鹿鳴樓翡翠菜飯</h4>
+            <p class="text-xs text-slate-300 mt-2 leading-relaxed">
+              炒得粒粒分明、油亮而不膩，青菜切得極細且帶干貝絲鮮香，保有傳統功夫菜的火候，被多位熟客讚許「在台北其他地方吃不到的香味」。
+            </p>
+            <div class="mt-3 text-[11px] text-slate-400 italic">「米飯粒粒分明，點綴的菜切得很細，是每次來都會想點的經典主食。」</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Positive 2 -->
+      <div class="bg-slate-900/90 border border-slate-800 hover:border-emerald-500/50 rounded-2xl p-6 card-transition shadow-lg">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-slate-800 pb-4">
+          <div class="flex items-center gap-3">
+            <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-400 font-black text-lg">02</span>
+            <div>
+              <h3 class="text-lg font-bold text-white">聚會宴請硬體絕佳：交通便利、挑高大器與獨立娛樂包廂</h3>
+              <p class="text-xs text-emerald-400 font-medium">適合家庭三代同堂、商務招待、校友餐敘、慶生聚會</p>
+            </div>
+          </div>
+          <span class="badge-positive px-3 py-1 rounded-full text-xs font-semibold self-start md:self-auto">場地機能 No.1</span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-5">
+          <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+            <h4 class="text-xs font-bold text-sky-400 uppercase tracking-wide">交通與停車極具優勢</h4>
+            <p class="text-xs text-slate-300 mt-2 leading-relaxed">
+              公館捷運站2號出口直行3-5分鐘即達；緊鄰台大收費停車場與會賢館，雙北家庭聚餐與長輩同行免除找車位的最大焦慮。
+            </p>
+          </div>
+
+          <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+            <h4 class="text-xs font-bold text-sky-400 uppercase tracking-wide">挑高無壓與超大包廂</h4>
+            <p class="text-xs text-slate-300 mt-2 leading-relaxed">
+              挑高格局採光與視覺開闊；二樓備有可容納20+人的超大獨立包廂，更配備專屬KTV唱歌系統與麻將桌，將用餐與家庭娛樂完美結合。
+            </p>
+          </div>
+
+          <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+            <h4 class="text-xs font-bold text-sky-400 uppercase tracking-wide">台大校友地利折扣特惠</h4>
+            <p class="text-xs text-slate-300 mt-2 leading-relaxed">
+              出示台大學生證、教職員或校友證享9折優惠，牢牢綁定台大EMBA、教授、學術研討會及校友會的常態性聚會基本盤。
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Positive 3 -->
+      <div class="bg-slate-900/90 border border-slate-800 hover:border-emerald-500/50 rounded-2xl p-6 card-transition shadow-lg">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-slate-800 pb-4">
+          <div class="flex items-center gap-3">
+            <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-400 font-black text-lg">03</span>
+            <div>
+              <h3 class="text-lg font-bold text-white">正宗江浙菜系底蘊扎實，菜單豐富度高、長輩外賓皆適宜</h3>
+              <p class="text-xs text-emerald-400 font-medium">榮獲亞太十大名廚，盲點大多不踩雷，份量飽足</p>
+            </div>
+          </div>
+          <span class="badge-positive px-3 py-1 rounded-full text-xs font-semibold self-start md:self-auto">廚藝深度 No.1</span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-5">
+          <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+            <h4 class="text-xs font-bold text-purple-400 uppercase tracking-wide">經典本幫功夫菜</h4>
+            <p class="text-xs text-slate-300 mt-2 leading-relaxed">
+              蔥燒鯽魚（整尾燜透連骨帶卵化軟）、清蒸臭豆腐（香臭多汁吸飽湯汁）、砂鍋醃篤鮮、紅燒下巴與老皮嫩肉，均展現主廚深厚火候功夫。
+            </p>
+          </div>
+
+          <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+            <h4 class="text-xs font-bold text-purple-400 uppercase tracking-wide">跨國賓客與挑食長輩通吃</h4>
+            <p class="text-xs text-slate-300 mt-2 leading-relaxed">
+              多位顧客提及帶7位外國友人、挑嘴公婆或平常挑食的年邁長輩來吃，均獲得一致讚賞；飯後附贈的銀耳紅棗甜湯（紅棗細心去籽）更添精緻感。
+            </p>
+          </div>
+
+          <div class="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50">
+            <h4 class="text-xs font-bold text-purple-400 uppercase tracking-wide">份量大方不怕餓著</h4>
+            <p class="text-xs text-slate-300 mt-2 leading-relaxed">
+              「份量不用擔心，絕對不會讓你餓著回家！」8個男生點合菜能吃飽，人均落在700~1000元，在中高檔功夫菜中具備良好滿足感。
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION: NEGATIVES DETAIL -->
+    <section id="view-negatives" class="hidden space-y-6">
+      <div class="border-b border-slate-800 pb-4">
+        <h2 class="text-xl font-bold text-white flex items-center gap-2">
+          <span class="w-3 h-3 rounded-full bg-rose-500"></span>
+          痛點直擊：三大最需要改進的致命缺失
+        </h2>
+        <p class="text-xs text-slate-400 mt-1">摧毀回訪率、引發一星負評的根本病灶，急需管理層大刀闊斧改革</p>
+      </div>
+
+      <!-- Negative 1 -->
+      <div class="bg-slate-900/90 border border-slate-800 hover:border-rose-500/50 rounded-2xl p-6 card-transition shadow-lg">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-slate-800 pb-4">
+          <div class="flex items-center gap-3">
+            <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-500/20 text-rose-400 font-black text-lg">01</span>
+            <div>
+              <h3 class="text-lg font-bold text-white">外場服務「急躁收盤、粗暴趕客」，嚴重侵犯顧客尊嚴</h3>
+              <p class="text-xs text-rose-400 font-medium">第一大扣分項！佔全部一星、二星評論的 80% 以上</p>
+            </div>
+          </div>
+          <span class="badge-negative px-3 py-1 rounded-full text-xs font-semibold self-start md:self-auto">致命危機 🔥</span>
+        </div>
+
+        <div class="mt-4 p-4 rounded-xl bg-rose-950/20 border border-rose-900/40 text-xs text-rose-200">
+          <strong>輿情現狀描繪：</strong>
+          「明明菜才剛上、碗裡還有食物，連問都不問就想收走」、「筷子根本還沒動就一直問要不要打包」、「同一個問題3分鐘內不同服務生輪流來催」、「90分鐘一到全桌收光光」、「服務生臉臭、主管像在訓話客人」。顧客付了10%服務費，喝水卻得自己倒，全程在被「監視趕場」的高壓下度過。
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+          <div class="p-4 bg-slate-800/40 rounded-xl border border-slate-700/40">
+            <h4 class="text-xs font-bold text-slate-300">病灶一：僵化的翻桌KPI考核</h4>
+            <p class="text-xs text-slate-400 mt-1 leading-relaxed">
+              外場將90分鐘「用餐時限」視為死命令，甚至在現場明明有多處空桌時，仍按部就班施壓客人離場，完全喪失餐飲業以人為本的溫度。
+            </p>
+          </div>
+
+          <div class="p-4 bg-slate-800/40 rounded-xl border border-slate-700/40">
+            <h4 class="text-xs font-bold text-slate-300">病灶二：收盤禮儀未經專業培訓</h4>
+            <p class="text-xs text-slate-400 mt-1 leading-relaxed">
+              服務員未建立「邊界感」，收盤時未事先禮貌詢問「請問這道還在使用嗎？」，反而讓客人產生「趕快吃完滾蛋」的強烈羞辱感。
+            </p>
+          </div>
+
+          <div class="p-4 bg-slate-800/40 rounded-xl border border-slate-700/40">
+            <h4 class="text-xs font-bold text-slate-300">病灶三：高層/主管官僚姿態惹議</h4>
+            <p class="text-xs text-slate-400 mt-1 leading-relaxed">
+              評論中特別點名負責接待的主管或執行長態度盛氣凌人、缺乏彈性，「官位比客人還大」、「一副遇到窮鬼不想做生意的態度」，嚴重重創品牌形象。
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Negative 2 -->
+      <div class="bg-slate-900/90 border border-slate-800 hover:border-rose-500/50 rounded-2xl p-6 card-transition shadow-lg">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-slate-800 pb-4">
+          <div class="flex items-center gap-3">
+            <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-500/20 text-rose-400 font-black text-lg">02</span>
+            <div>
+              <h3 class="text-lg font-bold text-white">出菜動線與邏輯混亂，暴風出菜致菜餚失溫顯油膩</h3>
+              <p class="text-xs text-rose-400 font-medium">內外場溝通失靈，好食材因溫控與次序毀於一旦</p>
+            </div>
+          </div>
+          <span class="badge-negative px-3 py-1 rounded-full text-xs font-semibold self-start md:self-auto">廚房節奏失衡 ⚠️</span>
+        </div>
+
+        <div class="mt-4 p-4 rounded-xl bg-rose-950/20 border border-rose-900/40 text-xs text-rose-200">
+          <strong>輿情現狀描繪：</strong>
+          「炒鱔魚、紅燒肉、雞湯等濃醬大菜都吃光了，最後才上菜飯」、「詢問桌邊只說大鍋料理要等，完全沒有為客人用餐著想」、「所有菜6分鐘內像暴風雨一口氣全上齊，桌子擺不下，後面的菜都涼掉變得極度油膩難入口」、「外熱內冷，明顯是預先做好加熱沒掌握好」。
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+          <div class="p-4 bg-slate-800/40 rounded-xl border border-slate-700/40">
+            <h4 class="text-xs font-bold text-slate-300">病灶一：主食與大菜出單顛倒</h4>
+            <p class="text-xs text-slate-400 mt-1 leading-relaxed">
+              中式料理中，濃油赤醬的東坡肉、花雕雞極度依賴「菜飯/白飯」配搭。主食遲到導致客人口感過鹹，待菜飯上桌時已無配菜，體驗大打折扣。
+            </p>
+          </div>
+
+          <div class="p-4 bg-slate-800/40 rounded-xl border border-slate-700/40">
+            <h4 class="text-xs font-bold text-slate-300">病灶二：缺乏出菜波次控管機制</h4>
+            <p class="text-xs text-slate-400 mt-1 leading-relaxed">
+              內場為了自己方便集中出菜，一次性塞滿桌面。大桌空間大、散熱快，江浙菜一旦失溫凝油，美味度直接折半。
+            </p>
+          </div>
+
+          <div class="p-4 bg-slate-800/40 rounded-xl border border-slate-700/40">
+            <h4 class="text-xs font-bold text-slate-300">病灶三：缺料替代未提前告知</h4>
+            <p class="text-xs text-slate-400 mt-1 leading-relaxed">
+              「點百合蘆筍，上菜卻是便宜的山藥，店員才說沒百合，且收一樣的錢」、「腐皮卷蝦仁未熟被咬過拿回廚房炸熟端回」，顯示內場危機管理與品保不及格。
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Negative 3 -->
+      <div class="bg-slate-900/90 border border-slate-800 hover:border-rose-500/50 rounded-2xl p-6 card-transition shadow-lg">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-slate-800 pb-4">
+          <div class="flex items-center gap-3">
+            <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-500/20 text-rose-400 font-black text-lg">03</span>
+            <div>
+              <h3 class="text-lg font-bold text-white">高單價節慶桌菜與包廂低消體驗崩盤（年夜飯災難）</h3>
+              <p class="text-xs text-rose-400 font-medium">高昂定價未能兌現相應價值，引發消費者「被宰客」的反彈怨氣</p>
+            </div>
+          </div>
+          <span class="badge-negative px-3 py-1 rounded-full text-xs font-semibold self-start md:self-auto">品牌聲譽裂痕 💸</span>
+        </div>
+
+        <div class="mt-4 p-4 rounded-xl bg-rose-950/20 border border-rose-900/40 text-xs text-rose-200">
+          <strong>輿情現狀描繪：</strong>
+          「一桌15800+10%=17380除夕夜，椅背貼椅背擠得像大型難民營，菜色廉價無任何拿手招牌，水果拼盤竟然是一開始桌上的橘子塔」、「包廂低消1萬，服務員不斷強迫加菜改成大份，小菜強迫推銷不吃還不行」、「帶生日蛋糕慶生竟然要外加300元清潔費」。
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+          <div class="p-4 bg-slate-800/40 rounded-xl border border-slate-700/40">
+            <h4 class="text-xs font-bold text-slate-300">病灶一：節慶超賣導致動線癱瘓</h4>
+            <p class="text-xs text-slate-400 mt-1 leading-relaxed">
+              為最大化節慶收益過度排桌，犧牲環境品質；高價桌菜捨棄招牌功夫菜（改用廉價量產菜），導致「平日好名聲、過年全砸鍋」。
+            </p>
+          </div>
+
+          <div class="p-4 bg-slate-800/40 rounded-xl border border-slate-700/40">
+            <h4 class="text-xs font-bold text-slate-300">病灶二：推銷手法侵入感過強</h4>
+            <p class="text-xs text-slate-400 mt-1 leading-relaxed">
+              服務人員硬性推動包廂顧客點滿低消，甚至在客人已經點過量時仍不斷鼓吹升級大份，最後剩下大量打包，讓顧客感到被強迫消費。
+            </p>
+          </div>
+
+          <div class="p-4 bg-slate-800/40 rounded-xl border border-slate-700/40">
+            <h4 class="text-xs font-bold text-slate-300">病灶三：瑣碎隱性收費破壞慶祝氣氛</h4>
+            <p class="text-xs text-slate-400 mt-1 leading-relaxed">
+              中高階餐廳顧客最重視「面子與歡聚氛圍」。自帶蛋糕加收300元清潔費、茶水收費卻無人倒水等細碎計較，極易觸怒聚餐主辦人。
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION: ACTION MATRIX -->
+    <section id="view-matrix" class="hidden space-y-6">
+      <div class="border-b border-slate-800 pb-4">
+        <h2 class="text-xl font-bold text-white flex items-center gap-2">
+          <span class="w-3 h-3 rounded-full bg-blue-500"></span>
+          專家搶救處方箋：四象限改善行動優先順序矩陣
+        </h2>
+        <p class="text-xs text-slate-400 mt-1">依據「影響成效（Impact）」與「執行難易度（Effort）」制定立竿見影的轉型清單</p>
+      </div>
+
+      <!-- Action Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        <!-- Quadrant 1: Quick Wins -->
+        <div class="bg-slate-900/80 border-2 border-emerald-500/50 rounded-2xl p-6 relative overflow-hidden">
+          <div class="flex items-center justify-between mb-3">
+            <span class="px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-400 text-xs font-bold uppercase tracking-wider">第一象限：立即見效 (Quick Wins)</span>
+            <span class="text-xs text-emerald-400 font-semibold">高影響 ｜ 低難度</span>
+          </div>
+          <h3 class="text-base font-bold text-white mb-2">重構外場撤盤與限時話術 SOP</h3>
+          <ul class="space-y-2 text-xs text-slate-300 leading-relaxed">
+            <li class="flex items-start gap-2">
+              <span class="text-emerald-400 font-bold">✔</span>
+              <span><strong>禁絕機械式巡盤：</strong>嚴禁空盤未經詢問直接收走。規定詢問話術為：「打擾您，這道菜需要幫您換成精緻小盤繼續享用嗎？」賦予客人決定權。</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-emerald-400 font-bold">✔</span>
+              <span><strong>未滿座時自動解除 90 分鐘限制：</strong>外場主動告知：「今天後續尚有空桌，您可以放鬆慢慢享用」，瞬間將負評痛點轉化為驚喜好感。</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-emerald-400 font-bold">✔</span>
+              <span><strong>取消 300 元蛋糕清潔費：</strong>凡家庭或包廂聚餐慶生，免費提供蛋糕分盤，並附贈一壺溫茶，建立高格局人情味。</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Quadrant 2: Strategic Projects -->
+        <div class="bg-slate-900/80 border-2 border-sky-500/50 rounded-2xl p-6 relative overflow-hidden">
+          <div class="flex items-center justify-between mb-3">
+            <span class="px-2.5 py-1 rounded bg-sky-500/20 text-sky-400 text-xs font-bold uppercase tracking-wider">第二象限：重大變革 (Strategic)</span>
+            <span class="text-xs text-sky-400 font-semibold">高影響 ｜ 中高難度</span>
+          </div>
+          <h3 class="text-base font-bold text-white mb-2">廚房 KDS 出單系統邏輯重構與出菜節奏</h3>
+          <ul class="space-y-2 text-xs text-slate-300 leading-relaxed">
+            <li class="flex items-start gap-2">
+              <span class="text-sky-400 font-bold">✔</span>
+              <span><strong>主食與重味菜綁定出餐：</strong>菜飯與白飯在下單後第 8~12 分鐘與第一道熱炒同步出餐，杜絕大菜吃完才上主食的荒謬現象。</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-sky-400 font-bold">✔</span>
+              <span><strong>實施三波次出菜規範：</strong>冷盤小菜（第5分）➔ 主熱炒與東坡肉（第15分）➔ 煲湯與時蔬（第25分）➔ 甜品（餐畢告知後出），確保桌面不擁擠且菜餚保持滾燙。</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-sky-400 font-bold">✔</span>
+              <span><strong>食材缺料主動預警：</strong>嚴禁私自替代食材（如百合缺貨換山藥），點餐時點餐機跳出警示，必須於點單當下徵詢顧客同意。</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Quadrant 3: Efficiency Tweaks -->
+        <div class="bg-slate-900/80 border border-slate-700 rounded-2xl p-6">
+          <div class="flex items-center justify-between mb-3">
+            <span class="px-2.5 py-1 rounded bg-slate-700 text-slate-300 text-xs font-bold uppercase tracking-wider">第三象限：漸進改善 (Operational)</span>
+            <span class="text-xs text-slate-400 font-semibold">中影響 ｜ 低難度</span>
+          </div>
+          <h3 class="text-base font-bold text-white mb-2">包廂點餐輔助與主動茶水服務</h3>
+          <ul class="space-y-2 text-xs text-slate-300 leading-relaxed">
+            <li class="flex items-start gap-2">
+              <span class="text-slate-400 font-bold">✔</span>
+              <span><strong>包廂低消透明配菜建議：</strong>設計 10,000 元專屬包廂套餐推薦單，按人數合理精算份量，嚴禁外場過度逼迫改點大份。</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-slate-400 font-bold">✔</span>
+              <span><strong>定時巡補茶水動線：</strong>外場配置保溫茶壺巡迴，見杯半即補，避免「收10%服務費卻得滿場找人倒水」的抱怨。</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Quadrant 4: Long-Term Brand Protection -->
+        <div class="bg-slate-900/80 border border-slate-700 rounded-2xl p-6">
+          <div class="flex items-center justify-between mb-3">
+            <span class="px-2.5 py-1 rounded bg-amber-500/20 text-amber-400 text-xs font-bold uppercase tracking-wider">第四象限：長期品牌保衛 (Long-term)</span>
+            <span class="text-xs text-amber-400 font-semibold">極高影響 ｜ 專案管理</span>
+          </div>
+          <h3 class="text-base font-bold text-white mb-2">節慶年菜/除夕圍爐徹底重塑案</h3>
+          <ul class="space-y-2 text-xs text-slate-300 leading-relaxed">
+            <li class="flex items-start gap-2">
+              <span class="text-amber-400 font-bold">✔</span>
+              <span><strong>降低除夕容客桌數 15%：</strong>釋放桌距，杜絕「椅背貼椅背」的群聚難民營感，營造團圓高貴氣氛。</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-amber-400 font-bold">✔</span>
+              <span><strong>年菜菜單必須保留招牌亮點：</strong>1.5 萬以上桌菜必排入招牌東坡肉與石斛燉雞湯，取消寒酸水果塔，改以精緻熱甜點與鮮果現切。</span>
+            </li>
+          </ul>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- SECTION: REVIEWS EXPLORER -->
+    <section id="view-reviews" class="hidden space-y-6">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+        <div>
+          <h2 class="text-xl font-bold text-white flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-cyan-500"></span>
+            原始評論互動檢索庫
+          </h2>
+          <p class="text-xs text-slate-400 mt-1">可按情感標籤、關鍵主題進行即時篩選與全文搜索</p>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="relative w-full md:w-72">
+          <input type="text" id="review-search" placeholder="搜尋評論內容 (如：東坡肉、趕客...)" 
+                 class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-cyan-500"
+                 oninput="filterReviews()">
+        </div>
+      </div>
+
+      <!-- Filter Buttons -->
+      <div class="flex flex-wrap gap-2 text-xs">
+        <button onclick="setFilter('all')" class="filter-btn active px-3 py-1.5 rounded-lg bg-cyan-600 text-white font-medium" data-filter="all">全部評論 (<span id="count-all">0</span>)</button>
+        <button onclick="setFilter('pos')" class="filter-btn px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 font-medium" data-filter="pos">正面好評 (<span id="count-pos">0</span>)</button>
+        <button onclick="setFilter('neg-service')" class="filter-btn px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 font-medium" data-filter="neg-service">服務/趕客痛點 (<span id="count-neg-service">0</span>)</button>
+        <button onclick="setFilter('dish-dongpo')" class="filter-btn px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 font-medium" data-filter="dish-dongpo">東坡肉口碑 (<span id="count-dongpo">0</span>)</button>
+        <button onclick="setFilter('dish-soup')" class="filter-btn px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 font-medium" data-filter="dish-soup">雞湯口碑 (<span id="count-soup">0</span>)</button>
+        <button onclick="setFilter('holiday')" class="filter-btn px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 font-medium" data-filter="holiday">年夜飯/桌菜爭議 (<span id="count-holiday">0</span>)</button>
+      </div>
+
+      <!-- Review Cards Container -->
+      <div id="reviews-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <!-- Rendered by JS -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-900 bg-slate-950 py-6 text-center text-xs text-slate-500">
+    <p>曉鹿鳴樓 (永續台灣功夫菜) 輿情聲量分析報告 ｜ 本分析由專業輿情數據模型提煉產出 ｜ 2026</p>
+  </footer>
+
+  <!-- Script: Data and Interactions -->
+  <script>
+    // Review Dataset from actual Google Reviews provided
+    const reviewsData = [
+      {
+        id: 1,
+        author: "Yun (在地嚮導)",
+        rating: "中立",
+        type: "neg-order",
+        tags: ["出菜順序", "菜飯太慢"],
+        content: "料理好吃，但上菜順序有點奇怪。點了菜飯、紅燒肉、鱔魚、雞湯等，醬汁濃郁的餐點都吃完了，最後才上菜飯。感覺並沒有為客人用餐順序著想，服務人員只說因為是大鍋料理所以要等。",
+        highlight: "大菜吃完了最後才上菜飯"
+      },
+      {
+        id: 2,
+        author: "DR LI (在地嚮導)",
+        rating: "正面",
+        type: "pos",
+        tags: ["CP值高", "親切服務", "份量足"],
+        content: "個人覺得這間餐館的C/P非常高，8個男生吃下來一個人大約960，東西不錯吃，份量也能夠吃飽，服務阿姨的態度也相當親切，非常推薦大家前來用餐！",
+        highlight: "8個男生吃飽人均960"
+      },
+      {
+        id: 3,
+        author: "Hugo Chen (在地嚮導)",
+        rating: "正面",
+        type: "pos",
+        tags: ["服務親切", "環境舒適", "聚餐推薦"],
+        content: "從入店開始就能感受到餐廳的用心，服務人員態度親切、應對得宜，讓整個用餐過程非常舒適放鬆，這點在熱門餐廳中其實相當難得。",
+        highlight: "服務親切放鬆"
+      },
+      {
+        id: 4,
+        author: "李山姆 (在地嚮導)",
+        rating: "正面",
+        type: "pos dish-dongpo dish-soup",
+        tags: ["東坡肉", "雞湯", "菜飯", "道地江浙菜"],
+        content: "一間相當有水準的江浙菜館，無論是軟爛鹹鮮適中的東坡肉，水潤又飽滿菜香的菜飯抑或是清新甘甜的雞湯，再再的都能感受到店家對於江浙菜的認知與誠意。非常值得三五好友聚餐。",
+        highlight: "軟爛鹹鮮適中的東坡肉"
+      },
+      {
+        id: 5,
+        author: "張哲睿 (在地嚮導)",
+        rating: "負面",
+        type: "neg-service",
+        tags: ["趕客", "態度差", "10%服務費"],
+        content: "東西普通沒有特別好吃，但無法理解沒什麼服務還要收10%服務費的理由在哪？就一般餐廳的點餐送餐服務，然後態度又差，時間快到還一直催客人離場，這輩子絕對不會再回訪！",
+        highlight: "時間快到還一直催客人離場"
+      },
+      {
+        id: 6,
+        author: "Jasmine Chou (在地嚮導)",
+        rating: "負面",
+        type: "neg-service",
+        tags: ["搶收盤子", "態度傲慢", "不回訪"],
+        content: "看了大家給的低評分內容，真心的覺得這是一家不會再去第二次的餐廳。沒有看過一家餐廳一直想把客人趕走，明明菜才剛上，碗裡的食物還沒吃完，連問也不問就想把我的碗收走！",
+        highlight: "食物還沒吃完連問也不問就想收走"
+      },
+      {
+        id: 7,
+        author: "Chang Chang",
+        rating: "負面",
+        type: "neg-service",
+        tags: ["主管態度", "盛氣凌人", "缺乏彈性"],
+        content: "用餐時臨時增加人數卻遭受接待人員擺態，負責接待的我們的『執行長』態度惡劣，彷彿官位比客人還高，盛氣凌人、缺乏彈性。高高在上的姿態，讓人感覺不是在用餐是在看臉色！",
+        highlight: "執行長態度惡劣盛氣凌人"
+      },
+      {
+        id: 8,
+        author: "楊鈞富 (在地嚮導)",
+        rating: "正面",
+        type: "pos dish-dongpo dish-soup",
+        tags: ["銷魂東坡肉", "石斛雞湯"],
+        content: "銷魂東波肉超好吃，峭壁石斛燉雞湯超好喝，以上兩道必點，其他菜色也好吃～",
+        highlight: "東坡肉超好吃石斛雞湯超好喝"
+      },
+      {
+        id: 9,
+        author: "king haw tian (在地嚮導)",
+        rating: "正面",
+        type: "pos dish-dongpo",
+        tags: ["史上最強東坡肉"],
+        content: "絕對是史上最強東坡肉！搭配刈包入口即化，太驚艷了。",
+        highlight: "絕對是史上最強東坡肉"
+      },
+      {
+        id: 10,
+        author: "Lii Gwen (在地嚮導)",
+        rating: "負面",
+        type: "holiday neg-service",
+        tags: ["除夕年夜飯", "擁擠難民營", "17380元", "狂催離場"],
+        content: "一桌15800外加10%總共17380，除夕夜吃得一臉懵！大圓桌擠得椅背貼椅背，根本大型難民營！菜色廉價又難吃。用餐期間服務人員一直催促，想換小盤還很不專業直接說只能打包不能換小盤！",
+        highlight: "除夕桌菜1.7萬如難民營一直催促"
+      },
+      {
+        id: 11,
+        author: "chi wawa (在地嚮導)",
+        rating: "正面",
+        type: "pos",
+        tags: ["二樓包廂", "可唱歌KTV", "上菜快"],
+        content: "在二樓包廂用餐體驗相當不錯！最特別的是可以一邊用餐一邊唱歌，將聚餐與娛樂結合，氣氛輕鬆不吵雜，非常適合多人聚會或小型慶祝，會想再回訪。",
+        highlight: "包廂一邊用餐一邊唱歌"
+      },
+      {
+        id: 12,
+        author: "Cougar Lai (在地嚮導)",
+        rating: "負面",
+        type: "neg-service",
+        tags: ["包廂低消", "強迫推銷小菜"],
+        content: "坐包廂有低消，點了桌菜，上菜前服務員一直要我們選小菜，說不用還一直不離開，勉強選了2樣那兩樣要180，一壺茶300，還有一成服務費，感受很不舒服。",
+        highlight: "包廂低消服務員一直強迫推小菜"
+      },
+      {
+        id: 13,
+        author: "Janet Lu",
+        rating: "正面",
+        type: "pos dish-soup",
+        tags: ["長輩滿意", "經典雞湯", "菜飯"],
+        content: "第一次帶爸爸媽媽來享用曉鹿鳴樓，爸媽對於每道菜色都讚不絕口，尤其是雞湯和菜飯，更是經典中的經典，一定會再光臨！",
+        highlight: "長輩讚不絕口經典雞湯"
+      },
+      {
+        id: 14,
+        author: "KELLY YEN (在地嚮導)",
+        rating: "負面",
+        type: "neg-service",
+        tags: ["菜涼變油", "一直問打包", "空桌很多還趕人"],
+        content: "菜上來沒多久就全涼了，涼掉後每道菜變得油膩難入口。用餐壓力極大，同個服務生不停來問需要打包嗎？回說還沒吃完後，隔不到3分鐘換個服務生來問。明明四周很多空桌！",
+        highlight: "每隔3分鐘問要不要打包"
+      },
+      {
+        id: 15,
+        author: "Benson Yu (在地嚮導)",
+        rating: "中立",
+        type: "pos",
+        tags: ["燉雞湯清爽", "蛋糕清潔費300"],
+        content: "每道菜都蠻好吃的，特別是燉雞湯清爽好喝。比較小可惜是帶蛋糕來慶生需要額外再付清潔費300元，感覺稍微斤斤計較了點。",
+        highlight: "帶蛋糕慶生被收清潔費300元"
+      },
+      {
+        id: 16,
+        author: "faye lin",
+        rating: "負面",
+        type: "holiday",
+        tags: ["年夜飯失望", "水果盤是橘子塔"],
+        content: "年夜飯菜單最後一道是水果拼盤，等了很久都沒有上，結果問了服務生後，所謂的水果拼盤就是一開始擺在桌上的橘子塔⋯⋯呵呵。",
+        highlight: "所謂水果拼盤是一開始桌上的橘子"
+      },
+      {
+        id: 17,
+        author: "Sonja Huang",
+        rating: "正面",
+        type: "pos dish-dongpo",
+        tags: ["外國人讚不絕口", "東坡肉", "老皮嫩肉"],
+        content: "帶7位不同國籍的外國老外來吃，大家都讚不絕口！點了東坡肉、宮保豆腐、老皮嫩肉、海菜炒蛋，好吃到外國人開心不已在店門口拍照，說下次來台灣一定要再來！",
+        highlight: "7位外國朋友讚不絕口"
+      },
+      {
+        id: 18,
+        author: "茂男黃 (在地嚮導)",
+        rating: "負面",
+        type: "neg-service",
+        tags: ["90分鐘收光", "沒客人也趕人"],
+        content: "假日用餐限90分鐘，問題是餐廳根本坐不滿沒客人。點餐上菜吃得很趕連甜點都來不及點；90分鐘一到全桌收光光！看你怎麼坐。感覺非常差，不會想再去。",
+        highlight: "90分鐘一到全桌直接收光光"
+      }
+    ];
+
+    let currentFilter = 'all';
+
+    function init() {
+      renderReviews();
+      updateCounts();
+    }
+
+    function switchTab(tabId) {
+      const views = ['overview', 'positives', 'negatives', 'matrix', 'reviews'];
+      views.forEach(v => {
+        const el = document.getElementById('view-' + v);
+        const tabBtn = document.getElementById('tab-' + v);
+        if (v === tabId) {
+          el.classList.remove('hidden');
+          tabBtn.className = "px-3 py-1.5 rounded-md transition text-white bg-slate-700 shadow-sm";
+        } else {
+          el.classList.add('hidden');
+          tabBtn.className = "px-3 py-1.5 rounded-md transition text-slate-400 hover:text-white";
+        }
+      });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function updateCounts() {
+      document.getElementById('count-all').innerText = reviewsData.length;
+      document.getElementById('count-pos').innerText = reviewsData.filter(r => r.rating === '正面').length;
+      document.getElementById('count-neg-service').innerText = reviewsData.filter(r => r.type.includes('neg-service')).length;
+      document.getElementById('count-dongpo').innerText = reviewsData.filter(r => r.type.includes('dish-dongpo')).length;
+      document.getElementById('count-soup').innerText = reviewsData.filter(r => r.type.includes('dish-soup')).length;
+      document.getElementById('count-holiday').innerText = reviewsData.filter(r => r.type.includes('holiday')).length;
+    }
+
+    function setFilter(filter) {
+      currentFilter = filter;
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        if (btn.dataset.filter === filter) {
+          btn.className = "filter-btn px-3 py-1.5 rounded-lg bg-cyan-600 text-white font-medium";
+        } else {
+          btn.className = "filter-btn px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 font-medium";
+        }
+      });
+      renderReviews();
+    }
+
+    function filterReviews() {
+      renderReviews();
+    }
+
+    function renderReviews() {
+      const container = document.getElementById('reviews-grid');
+      const searchTerm = document.getElementById('review-search').value.toLowerCase().trim();
+
+      const filtered = reviewsData.filter(r => {
+        // filter check
+        let matchFilter = true;
+        if (currentFilter === 'pos') matchFilter = (r.rating === '正面');
+        else if (currentFilter === 'neg-service') matchFilter = r.type.includes('neg-service');
+        else if (currentFilter === 'dish-dongpo') matchFilter = r.type.includes('dish-dongpo');
+        else if (currentFilter === 'dish-soup') matchFilter = r.type.includes('dish-soup');
+        else if (currentFilter === 'holiday') matchFilter = r.type.includes('holiday');
+
+        // search check
+        let matchSearch = true;
+        if (searchTerm) {
+          matchSearch = r.content.toLowerCase().includes(searchTerm) || 
+                        r.author.toLowerCase().includes(searchTerm) || 
+                        r.tags.some(t => t.toLowerCase().includes(searchTerm));
+        }
+
+        return matchFilter && matchSearch;
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="col-span-full py-12 text-center text-slate-500 text-xs">
+            查無相符的評論，請嘗試其他關鍵字。
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = filtered.map(r => {
+        const isPos = r.rating === '正面';
+        const isNeg = r.rating === '負面';
+        const badgeClass = isPos ? 'badge-positive' : (isNeg ? 'badge-negative' : 'badge-warning');
+        const borderClass = isPos ? 'hover:border-emerald-500/50' : (isNeg ? 'hover:border-rose-500/50' : 'hover:border-amber-500/50');
+
+        return `
+          <div class="bg-slate-900/80 border border-slate-800 ${borderClass} rounded-xl p-4 card-transition flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <span class="font-bold text-xs text-white">${r.author}</span>
+                <span class="${badgeClass} px-2 py-0.5 rounded text-[11px] font-semibold">${r.rating}</span>
+              </div>
+              <p class="text-xs text-slate-300 leading-relaxed">${r.content}</p>
+            </div>
+            <div class="mt-4 pt-3 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-1">
+              <div class="flex flex-wrap gap-1">
+                ${r.tags.map(t => `<span class="text-[10px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded">${t}</span>`).join('')}
+              </div>
+              <span class="text-[11px] font-medium text-amber-400">“${r.highlight}”</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Initialize on load
+    window.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>

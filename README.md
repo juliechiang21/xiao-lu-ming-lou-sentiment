@@ -1,6 +1,8 @@
 # 曉鹿鳴樓 (永續台灣功夫菜) Google 評論輿情大數據分析儀表板
 
 > **國立臺灣大學 商學研究所｜人工智慧時代之商業競爭策略 專案研究**
+>
+> 🌐 **線上互動展示網址 (Live Demo)**：[https://juliechiang21.github.io/xiao-lu-ming-lou-sentiment/](https://juliechiang21.github.io/xiao-lu-ming-lou-sentiment/)
 
 ---
 
